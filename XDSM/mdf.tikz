@@ -13,59 +13,213 @@
 
 %%% End Preamble Requirements %%%
 
-\input{"/Users/prateekranjan/miniconda3/envs/tasopt/lib/python3.12/site-packages/pyxdsm/diagram_styles"}
+\input{"/Users/prateekranjan/Documents/Github/pyXDSM/pyxdsm/diagram_styles"}
 \begin{tikzpicture}
 
 \matrix[MatrixSetup]{
 %Row 0
-\node [DataIO] (left_output_opt) {$x^*, z^*$};&
-\node [Optimization] (opt) {$\text{Optimizer}$};&
 &
-\node [DataInter] (opt-D1) {$x, z$};&
-\node [DataInter] (opt-D2) {$z$};&
-\node [DataInter] (opt-F) {$x, z$};&
+\node [Optimization] (opt) {$\text{tasopt.jl}$};&
+\node [DataInter] (opt-wsize) {$para, pare, parg, pari$};&
+&
+&
+&
+&
+&
+&
+&
+&
+&
+&
 \\
 %Row 1
 &
 &
-\node [MDA] (solver) {$\text{Newton}$};&
-\node [DataInter] (solver-D1) {$y_2$};&
-\node [DataInter] (solver-D2) {$y_1$};&
-\node [DataInter] (solver-F) {$y_1, y_2$};&
-\node [DataInter] (solver-G) {$y_1, y_2$};\\
-%Row 2
-\node [DataIO] (left_output_D1) {$y_1^*$};&
+\node [MDA] (wsize) {$\text{wsize()}$};&
+\node [DataInter] (wsize-preproc) {$para, pare, parg, pari$};&
 &
-\node [DataInter] (D1-solver) {$\mathcal{R}(y_1)$};&
-\node [Function] (D1) {$D_1$};&
+&
+&
+&
+&
+&
+&
+&
+&
+\\
+%Row 2
+&
+&
+&
+\node [MDA] (preproc) {$\text{preprocess()}$};&
+&
+\node [DataInter] (preproc-fusebl) {$para, parg, pari, ipcruise1$};&
+\node [DataInter] (preproc-waypaymax) {$Max. Pax X Wpax$};&
+\node [DataInter] (preproc-weightfrac) {$parg$};&
+\node [DataInter] (preproc-structures) {$parg$};&
+&
+&
 &
 &
 \\
 %Row 3
-\node [DataIO] (left_output_D2) {$y_2^*$};&
 &
-\node [DataInter] (D2-solver) {$\mathcal{R}(y_2)$};&
 &
-\node [Function] (D2) {$D_2$};&
+\node [DataInter] (atmos-wsize) {$TSL, rhoSL, aSL, muSL$};&
+&
+\node [Function] (atmos) {$\text{atmos()}$};&
+&
+&
+&
+&
+\node [DataInter] (atmos-atm_cons) {$T, \rho, a, \mu$};&
+&
+&
 &
 \\
 %Row 4
-\node [DataIO] (left_output_F) {$f^*$};&
-\node [DataInter] (F-opt) {$f$};&
+&
+&
+\node [DataInter] (fusebl-wsize) {$KAfTE, DAfwake, PAfinf$};&
+&
+&
+\node [Function] (fusebl) {$\text{fusebl()}$};&
 &
 &
 &
-\node [Function] (F) {$F$};&
+&
+&
+&
+&
 \\
 %Row 5
-\node [DataIO] (left_output_G) {$g^*$};&
-\node [DataInter] (G-opt) {$g$};&
+&
+&
+\node [DataInter] (waypaymax-wsize) {$maxPayload$};&
+&
+&
+&
+\node [Function] (waypaymax) {$\text{waypaymax()}$};&
+\node [DataInter] (waypaymax-weightfrac) {$maxPayload$};&
 &
 &
 &
 &
-\node [Function] (G) {$G$};\\
+&
+\\
 %Row 6
+\node [DataIO] (left_output_weightfrac) {$W_{apu}, W_{padd}, W_{seat}$};&
+&
+&
+&
+&
+&
+&
+\node [Function] (weightfrac) {$\text{weightfrac()}$};&
+&
+&
+&
+\node [DataInter] (weightfrac-wIter) {$fhadd ,fvadd, fwadd, fhpesys, flgnose, flgmain$};&
+\node [DataInter] (weightfrac-fuseW) {$fstring, fframe, ffadd$};&
+\node [DataInter] (weightfrac-tfweight) {$feadd, pylon$};\\
+%Row 7
+\node [DataIO] (left_output_structures) {$\sigma W_{cap}, \tau_{web}, \sigma_{skin}, \sigma_{bend}, \sigma_{strut}, \sigma_{caph}, \sigma_{capv}$};&
+&
+&
+&
+&
+&
+&
+&
+\node [Function] (structures) {$\text{structures()}$};&
+&
+&
+&
+&
+\\
+%Row 8
+&
+&
+\node [DataInter] (atm_cons-wsize) {$parae, para$};&
+&
+\node [DataInter] (atm_cons-atmos) {$altitude$};&
+&
+&
+&
+&
+\node [Function] (atm_cons) {$\text{atmCond()}$};&
+&
+&
+&
+\\
+%Row 9
+&
+&
+&
+&
+&
+&
+&
+&
+&
+&
+\node [MDA] (guess) {$\text{guess()}$};&
+&
+&
+\\
+%Row 10
+&
+&
+&
+&
+&
+&
+&
+&
+&
+&
+&
+\node [MDA] (wIter) {$\text{wIter()}$};&
+&
+\\
+%Row 11
+&
+&
+&
+&
+&
+&
+&
+&
+&
+&
+&
+&
+\node [Function] (fuseW) {$\text{fuseW()}$};&
+\\
+%Row 12
+&
+&
+&
+&
+&
+&
+&
+&
+&
+&
+&
+&
+&
+\node [Function] (tfweight) {$\text{tfweight()}$};\\
+%Row 13
+&
+&
+&
+&
+&
+&
+&
 &
 &
 &
@@ -81,34 +235,41 @@
 \begin{pgfonlayer}{data}
 \path
 % Horizontal edges
-(opt) edge [DataLine] (opt-D1)
-(opt) edge [DataLine] (opt-D2)
-(opt) edge [DataLine] (opt-F)
-(solver) edge [DataLine] (solver-D1)
-(solver) edge [DataLine] (solver-D2)
-(D1) edge [DataLine] (D1-solver)
-(solver) edge [DataLine] (solver-F)
-(D2) edge [DataLine] (D2-solver)
-(solver) edge [DataLine] (solver-G)
-(F) edge [DataLine] (F-opt)
-(G) edge [DataLine] (G-opt)
-(opt) edge [DataLine] (left_output_opt)
-(D1) edge [DataLine] (left_output_D1)
-(D2) edge [DataLine] (left_output_D2)
-(F) edge [DataLine] (left_output_F)
-(G) edge [DataLine] (left_output_G)
+(opt) edge [DataLine] (opt-wsize)
+(wsize) edge [DataLine] (wsize-preproc)
+(preproc) edge [DataLine] (preproc-waypaymax)
+(preproc) edge [DataLine] (preproc-fusebl)
+(preproc) edge [DataLine] (preproc-weightfrac)
+(preproc) edge [DataLine] (preproc-structures)
+(atmos) edge [DataLine] (atmos-wsize)
+(fusebl) edge [DataLine] (fusebl-wsize)
+(waypaymax) edge [DataLine] (waypaymax-wsize)
+(waypaymax) edge [DataLine] (waypaymax-weightfrac)
+(weightfrac) edge [DataLine] (weightfrac-tfweight)
+(weightfrac) edge [DataLine] (weightfrac-fuseW)
+(weightfrac) edge [DataLine] (weightfrac-wIter)
+(atm_cons) edge [DataLine] (atm_cons-atmos)
+(atmos) edge [DataLine] (atmos-atm_cons)
+(atm_cons) edge [DataLine] (atm_cons-wsize)
+(weightfrac) edge [DataLine] (left_output_weightfrac)
+(structures) edge [DataLine] (left_output_structures)
 % Vertical edges
-(opt-D1) edge [DataLine] (D1)
-(opt-D2) edge [DataLine] (D2)
-(opt-F) edge [DataLine] (F)
-(solver-D1) edge [DataLine] (D1)
-(solver-D2) edge [DataLine] (D2)
-(D1-solver) edge [DataLine] (solver)
-(solver-F) edge [DataLine] (F)
-(D2-solver) edge [DataLine] (solver)
-(solver-G) edge [DataLine] (G)
-(F-opt) edge [DataLine] (opt)
-(G-opt) edge [DataLine] (opt);
+(opt-wsize) edge [DataLine] (wsize)
+(wsize-preproc) edge [DataLine] (preproc)
+(preproc-waypaymax) edge [DataLine] (waypaymax)
+(preproc-fusebl) edge [DataLine] (fusebl)
+(preproc-weightfrac) edge [DataLine] (weightfrac)
+(preproc-structures) edge [DataLine] (structures)
+(atmos-wsize) edge [DataLine] (wsize)
+(fusebl-wsize) edge [DataLine] (wsize)
+(waypaymax-wsize) edge [DataLine] (wsize)
+(waypaymax-weightfrac) edge [DataLine] (weightfrac)
+(weightfrac-tfweight) edge [DataLine] (tfweight)
+(weightfrac-fuseW) edge [DataLine] (fuseW)
+(weightfrac-wIter) edge [DataLine] (wIter)
+(atm_cons-atmos) edge [DataLine] (atmos)
+(atmos-atm_cons) edge [DataLine] (atm_cons)
+(atm_cons-wsize) edge [DataLine] (wsize);
 \end{pgfonlayer}
 
 \end{tikzpicture}

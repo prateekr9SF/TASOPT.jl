@@ -137,19 +137,19 @@ function wsizeDev(pari, parg, parm, para, pare,
     fapu = parg[igfapu]
     fpadd = parg[igfpadd]
     fseat = parg[igfseat]
-    feadd = parg[igfeadd]
-    fnace = parg[igfnace]
-    fhadd = parg[igfhadd]
-    fvadd = parg[igfvadd]
-    fwadd = parg[igfflap] + parg[igfslat] +
+    feadd = parg[igfeadd]   # used for tfweight
+    fnace = parg[igfnace]   # not used anywhere!
+    fhadd = parg[igfhadd]   # used for tail sizing
+    fvadd = parg[igfvadd]  # used for tail sizing
+    fwadd = parg[igfflap] + parg[igfslat] +  # used for wing weight sizing
             parg[igfaile] + parg[igflete] + parg[igfribs] + parg[igfspoi] + parg[igfwatt]
 
 
-    fstring = parg[igfstring]
-    fframe = parg[igfframe]
-    ffadd = parg[igffadd]
+    fstring = parg[igfstring] #used for fuseW
+    fframe = parg[igfframe]     # used for fuseW
+    ffadd = parg[igffadd]   # used for fuseW
         
-    fpylon = parg[igfpylon]
+    fpylon = parg[igfpylon] # used for tfweight
 
     fhpesys = parg[igfhpesys]
     flgnose = parg[igflgnose]
@@ -465,44 +465,167 @@ function wsizeDev(pari, parg, parm, para, pare,
 
         print_fuel_fractions(ffburn, ffuelb, ffuelc,ffueld,ffuele, ffuel)
 
+        # Interpolate for the rest
+        #--------- Simple linear interpolation ---------
+        #     y-y1   y2-y1
+        #     ---- = ----- => y = y1*(1-frac) + y2*frac
+        #     x-x1   x2-x1
+        #-----------------------------------------------
+        # Climb
+        @inbounds for ip = ipclimb1:ipclimbn
+            frac = float(ip - ipclimb1) / float(ipclimbn - ipclimb1)
+            ffp = ffuelb * (1.0 - frac) + ffuelc * frac
+            para[iafracW, ip] = 1.0 - ffuel + ffp
+        end
+
+        # Cruise
+        @inbounds for ip = ipcruise1:ipcruisen
+            frac = float(ip - ipcruise1) / float(ipcruisen - ipcruise1)
+            ffp = ffuelc * (1.0 - frac) + ffueld * frac
+            para[iafracW, ip] = 1.0 - ffuel + ffp
+        end
+
+        # Descent
+        @inbounds for ip = ipdescent1:ipdescentn
+            frac = float(ip - ipdescent1) / float(ipdescentn - ipdescent1)
+            ffp = ffueld * (1.0 - frac) + ffuele * frac
+            para[iafracW, ip] = 1.0 - ffuel + ffp
+        end
+
+        # Initial tail info for sizing of fuselage bending and torsion added material 
+        # NoteL CLh and CLv are user-input. 
+        Sh = (2.0 * Wpaymax) / (qne * CLhmax)
+        Sv = (2.0 * Wpaymax) / (qne * CLvmax)
+        bv = sqrt(Sv * ARv)
+
+        # Store the wetted areas for H.T and V.T
+        parg[igSh] = Sh
+        parg[igSv] = Sv
+
+        # Initial cruise-climb angle gamVcr needed to estimate end-of-cruise altitude
+        gamVcr = 0.0002
+        # Estimate the CD @ ipcruise1 based on user-defined CL and LoD
+        para[iaCD, ipcruise1] = para[iaCL, ipcruise1] / LoD
+        para[iagamV, ipcruise1] = gamVcr       
+
+
+        # Pressure and altitude at start of cruise
+        Mach = para[iaMach, ipcruise1]
+        p0c = pare[iep0, ipcruise1]
+        altc = para[iaalt, ipcruise1]
+
+        # Guess pressure at end-of-cruise (scales with weight)
+        p0d = p0c * (1.0 - ffuel + ffueld) / (1.0 - ffuel + ffuelc)
+        pare[iep0, ipcruisen] = p0d
+
+        # Guess for OEI #TODO This needs some thinking about what is "One engine out" mean for a turbo-electric aircraft
+        # pare[ieFe, iprotate] = 2.0*Wpay/neng
+        pare[ieFe, iprotate] = 2.0 * Wpay # ieFe now stores total thrust
+        pare[ieu0, iprotate] = 70.0
+        Afan = 3.0e-5 * Wpay / neng
+        parg[igdfan] = sqrt(Afan * 4.0 / π)
+        
+        # Guess fan face mach numbers for nacelle CD calcs
+        M2des = pare[ieM2, ipcruise1] = 0.6
+        pare[ieM2, ipstatic:ipcruisen] .= M2des
+        pare[ieM2, ipdescent1:ipdescentn] .= 0.8 * M2des
+
+        if (!use_NPSS)
+            # calculate initial guesses for cooling mass flow ratios epsrow(.)
+            ip = iprotate
+            cpc = 1080.0
+            cp4 = 1340.0
+            Rgc = 288.0
+            Rg4 = 288.0
+            M0to = pare[ieu0, ip] / pare[iea0, ip]
+            T0to = pare[ieT0, ip]
+            epolhc = pare[ieepolhc, ip]
+            OPRto = pare[iepilc, ipcruise1] * pare[iepihc, ipcruise1]
+            Tt4to = pare[ieTt4, ip]
+            dTstrk = pare[iedTstrk, ip]
+            Mtexit = pare[ieMtexit, ip]
+            efilm = pare[ieefilm, ip]
+            tfilm = pare[ietfilm, ip]
+            StA = pare[ieStA, ip]
+            for icrow = 1:ncrowx
+                Tmrow[icrow] = parg[igTmetal]
+            end
+
+            Tt2to = T0to * (1.0 + 0.5 * (gamSL - 1.0) * M0to^2)
+            Tt3to = Tt2to * OPRto^(Rgc / (epolhc * cpc))
+            Trrat = 1.0 / (1.0 + 0.5 * Rg4 / (cp4 - Rg4) * Mtexit^2)
+
+            ncrow, epsrow, epsrow_Tt3, epsrow_Tt4, epsrow_Trr = mcool(ncrowx, Tmrow,
+                Tt3to, Tt4to, dTstrk, Trrat, efilm, tfilm, StA)
+
+            epstot = 0.0
+            for icrow = 1:ncrow
+                epstot = epstot + epsrow[icrow]
+            end
+            fo = pare[iemofft, ip] / pare[iemcore, ip]
+            fc = (1.0 - fo) * epstot
+
+            for jp = 1:iptotal
+                pare[iefc, jp] = fc
+                for icrow = 1:ncrowx
+                    pare[ieepsc1+icrow-1, jp] = epsrow[icrow]
+                    pare[ieTmet1+icrow-1, jp] = Tmrow[icrow]
+                end
+            end
+        end
+        
         println("Fist iteration complete!")
 
-    end
+    else
 
+        # Wing parameters
+        S = parg[igS]
+        b = parg[igb]
+        bs = parg[igbs]
+        bo = parg[igbo]
 
+        bh = parg[igbh]
+        bv = parg[igbv]
 
+        coh = parg[igcoh]
+        cov = parg[igcov]
 
+        cbox = parg[igco] * parg[igwbox]
 
+        Whtail = parg[igWhtail]
+        Wvtail = parg[igWvtail]
+        Wwing = parg[igWwing]
+        Wstrut = parg[igWstrut]
+        Weng = parg[igWeng]
+        Winn = parg[igWinn]
+        Wout = parg[igWout]
+        dxWhtail = parg[igdxWhtail]
+        dxWvtail = parg[igdxWvtail]
+        dyWinn = parg[igdyWinn]
+        dyWout = parg[igdyWout]
 
+        WMTO = parg[igWMTO]
+        feng = parg[igWeng] / WMTO
+        ffuel = parg[igWfuel] / WMTO
 
+        xwing = parg[igxwing]
+        dxwing = parg[igxwing] - parg[igxwbox]
 
+        xhtail = parg[igxhtail]
+        xvtail = parg[igxvtail]
 
+        xhbox = parg[igxhbox]
+        xvbox = parg[igxvbox]
 
+        fSnace = parg[igfSnace]
 
+        Sh = parg[igSh]
+        Sv = parg[igSv]
+        ARh = parg[igARh]
+        ARv = parg[igARv]
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-     
-
-
-
-
-
+        # Turbo-electric system
+        Wtesys = parg[igWtesys]
+        Wftank = parg[igWftank]
+    end   
 end
