@@ -112,7 +112,17 @@ function print_table_fuselage_params(parm, parg)
 end
 
 
+using Printf
 
-
-
-
+function print_fuel_fractions(ffburn, ffuelb, ffuelc, ffueld, ffuele, ffuel)
+    println("-------------------------------------------------")
+    println("                 Fuel Fractions                  ")
+    println("-------------------------------------------------")
+    @printf("%-30s: %f\n", "Mission fuel fraction", ffburn)
+    @printf("%-30s: %f\n", "Climb fuel fraction 1", ffuelb)
+    @printf("%-30s: %f\n", "Cruise fuel fraction", ffuelc)
+    @printf("%-30s: %f\n", "TOD fuel fraction", ffueld)
+    @printf("%-30s: %f\n", "EOD fuel fraction", ffuele)
+    @printf("%-30s: %f\n", "Total fuel fraction", ffuel)
+    println("-------------------------------------------------")
+end

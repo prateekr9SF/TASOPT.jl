@@ -9,6 +9,7 @@
 *.results
 *.dbg
 *.png
+*.csv
 *.perf
 *.PTF
 *.LTO

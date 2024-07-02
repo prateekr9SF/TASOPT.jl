@@ -463,6 +463,8 @@ function wsizeDev(pari, parg, parm, para, pare,
         para[iafracW, iptakeoff] = 1.0
         para[iafracW, ipcutback] = 1.0 
 
+        print_fuel_fractions(ffburn, ffuelb, ffuelc,ffueld,ffuele, ffuel)
+
         println("Fist iteration complete!")
 
     end
