@@ -5,6 +5,39 @@ import seaborn as sns
 import scipy.stats as stats
 from numpy.polynomial.legendre import leggauss
 
+"""
+Script for analyzing and visualizing Mach-CL histograms with integration points.
+
+This script processes a dataset of Mach and CL frequency distributions, computes bin sizes,
+generates integration points, and visualizes the data using 2D histograms. It supports Gaussian quadrature-based integration point selection and frequency-based weight normalization.
+
+Dependencies:
+    - numpy
+    - pandas
+    - matplotlib
+    - seaborn
+    - scipy
+
+Functions:
+    - get_bin_sizes(df): Computes the bin size for Mach and CL from the dataset.
+    - plot_2d_histogram(df, ...): Plots a 2D histogram with integration points and bounding box.
+    - compute_frequencies_and_weights(mach_points, cl_points, df, ...): Computes normalized weights based on frequency distribution.
+    - generate_9_uniform_points(mach_min, mach_max, cl_min, cl_max): Generates 9 evenly spaced integration points in the bounding box.
+
+Example Usage:
+    ```python
+    file_path = "data/E170_histogram_data.csv"
+    df = pd.read_csv(file_path)
+    mach_bin_size, cl_bin_size = get_bin_sizes(df)
+    mach_points_9, cl_points_9, weights_9 = generate_9_uniform_points(mach_min, mach_max, cl_min, cl_max)
+    mach_points_9, cl_points_9, weights_9, surrounding_bins_list = compute_frequencies_and_weights(mach_points_9, cl_points_9, df, mach_bin_size, cl_bin_size, filter_radius)
+    plot_2d_histogram(df, mach_min, mach_max, cl_min, cl_max, mach_points_9, cl_points_9, surrounding_bins_list, weights_9, plot_box, plot_points)
+    ```
+
+Author: Prateek Ranjan, Ph.D
+Date: March 2025
+"""
+
 
 def get_bin_sizes(df):
     """Return the bin size for Mach and CL from the CSV file."""
