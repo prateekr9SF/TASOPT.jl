@@ -8,7 +8,6 @@
 *.code-workspace
 *.results
 *.dbg
-*.png
 *.perf
 *.PTF
 *.LTO
