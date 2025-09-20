@@ -5,107 +5,133 @@ x = XDSM(use_sfmath=False)
 
 #-------------------------DIAGONAL BLOCK DEFINITION--------------------------#
 # Add optimizer
-x.add_system("Optimizer", OPT, r"\text{Optimizer}")
+#x.add_system("Optimizer", OPT, r"\text{Optimizer}")
 
-# Add MDA block
-x.add_system("MDA", SOLVER, r"\text{MDA}")
+x.add_system("Mission", SOLVER, r"\text{Mission}")
 
 # Add fluid block
 x.add_system("Fluid", FLUID, r"\text{Aerodynamics}")
 
+# Add MDA block
+x.add_system("Init", OPT, r"\text{Initialize}")
+
+# Add MDA block
+x.add_system("MDA", SOLVER, r"\text{Gauss-Siedel}")
+
+
+
+
+
 # Add solid block
-x.add_system("Solid", SOLID, r"\text{Structure}")
+#x.add_system("Solid", SOLID, r"\text{Structure}")
 
 # Add propulsion block
-x.add_system("Prop", PROPULSION, r"\text{Propulsion}")
+#x.add_system("Prop", PROPULSION, r"\text{Propulsion}")
 
-# Add propulsion block
-x.add_system("Func", FUNF, r"\text{Functions}", stack=True)
+# Define aircraft components:: Aerodynamics
+x.add_system("FuseAero", FUNF, r"\text{Fuselage}", stack=False)
+
+#x.add_system("WingAero", FUNF, r"\text{Wing}", stack=False)
+
+#x.add_system("H.TailAero", FUNF, r"\text{Horizontal Tail}", stack=False)
+
+#x.add_system("V.TailAero", FUNF, r"\text{Vertical Tail}", stack=False)
+
+# DEFINE COMPONENTS :: STRUCTURES
+
+#x.add_system("FuseStruct", FUNS, r"\text{Fuselage}", stack=False)
+
+x.add_system("WingStruct", FUNS, r"\text{Wing}", stack=False)
+
+x.add_system("TailStruct", FUNS, r"\text{H/V Tail}", stack=False)
+
+x.add_system("NacelleStruct", FUNS, r"\text{Nacelle}", stack=False)
+
+x.add_system("FuelFrac", FUNS, r"\text{Fuel}", stack=False)
+
+#x.add_system("H.TailStruct", FUNS, r"\text{Horizontal Tail}", stack=False)
+
+#x.add_system("V.TailStruct", FUNS, r"\text{Vertical Tail}", stack=False)
+
 #-------------------------DIAGONAL BLOCK DEFINITION:END--------------------------#
 
-#-------------------------SUB-FUNCTION BLOCK DEFINITION--------------------------#
-
-# Add fluid sub-function
-#x.add_system("fluid_sub_func", FUNF, r"\text{traction()}")
-
-# Add solid sub-function
-#x.add_system("solid_sub_func", FUNS, r"\text{displacement()}")
 
 
-#-------------------------OFF-DIAGONAL BLOCK DEFINITION:END--------------------------#
 
-# DEFINE CONECTIONS
-
-# Fluid passes mesh coordinates x, y, z to traction()
-#x.connect("Fluid", "fluid_sub_func", r"\text{x,y,z}")
-
-
-# Fluid sub func passes traction to solid
-#x.connect("fluid_sub_func", "Solid", r"f_x, f_y, f_z")
-
-# Solid passes tractions to internal solver
-#x.connect("Solid", "solid_sub_func", r"f_x, f_y, f_z")
-
-# Solid internal solver passes nodal displacements to fluid
-#x.connect("solid_sub_func", "Fluid", r"u_x, u_y, u_z")
-
-# Solid passes elastic residual to MDA
-#x.connect("Solid", "MDA", r"\mathcal{S}")
-
-# Fluid passes fluid residual to MDA
-#x.connect("Fluid", "MDA", r"\mathcal{F}")
 
 # IPOPT Reached out to MDA solver
-x.connect("Optimizer", "Fluid","x^o, x_a" )
-x.connect("Optimizer", "Solid","x^o, x_s" )
-x.connect("Optimizer", "Prop","x^o, x_p" )
-x.connect("Optimizer", "Func","x" )
+
+# Mission passes values to MDA solver
+x.connect("Mission", "Init", "Range, Payload")
+
+#x.connect("Init", "MDA", r"\text{fuel}")
+
+x.connect("Init", "WingStruct", r"\text{wing geometry, payload}")
+
+x.connect("Init", "TailStruct", r"\text{tail geometry, payload}")
+
+x.connect("Init", "NacelleStruct", r"\text{geometry}")
+
+x.connect("Init", "FuelFrac", r"\text{Fuel estimate}")
+
+# Within Aerodynamcis, call Fuselage for aero properties
+x.connect("Fluid", "FuseAero", r"\text{Fuselage geometry}")
+
+x.connect("FuseAero", "Mission", r"\text{Fuselage drag}")
+
+x.connect("WingStruct", "MDA", r"{weight^t, moment^t, centeroid^t}")
+
+x.connect("TailStruct", "MDA", r"{weight^t, moment^t, centeroid^t}")
+
+x.connect("NacelleStruct", "MDA", r"{length^t, weight-fraction^t}")
+
+x.connect("FuelFrac", "MDA", r"{fuel weight^t}")
 
 # MDA passes structural and propulsion variables to fluid
-x.connect("MDA", "Fluid", "y_s,y_p")
+#x.connect("MDA", "Fluid", "y_s,y_p")
 
 # MDA passespropulsion variables to solid
-x.connect("MDA", "Solid", "y_p")
+#x.connect("MDA", "Solid", "y_p")
 
 # Fluid passes aerodynamic variables to elastic and propulsion
-x.connect("Fluid", "Solid", "y_a")
-x.connect("Fluid", "Prop", "y_a")
+#x.connect("Fluid", "Solid", "y_a")
+#x.connect("Fluid", "Prop", "y_a")
 
 # Solid passes elastic variable to propulsion
-x.connect("Solid", "Prop", "y_s")
+#x.connect("Solid", "Prop", "y_s")
 
 # Fluid passes aerodynamic variable to MDA
-x.connect("Fluid", "MDA", "y_a")
+#x.connect("Fluid", "MDA", "y_a")
 
 # Solid passes aerodynamic variable to MDA
-x.connect("Solid", "MDA", "y_s")
+#x.connect("Solid", "MDA", "y_s")
 
 # Solid passes aerodynamic variable to MDA
-x.connect("Prop", "MDA", "y_p")
+#x.connect("Prop", "MDA", "y_p")
 
 # Fluid passes converged aerodynamic variable to Functions
-x.connect("Fluid", "Func", "y_a^*")
-x.connect("Solid", "Func", "y_s^*")
-x.connect("Prop", "Func", "y_p^*")
+#x.connect("Fluid", "Func", "y_a^*")
+#x.connect("Solid", "Func", "y_s^*")
+#x.connect("Prop", "Func", "y_p^*")
 
 
 
 #-------------------------INDIVIDUAL DISCIPLINES OUTPUT:BEGIN--------------------------#
-x.add_output("Fluid", "y_a^*", side=LEFT)
-x.add_output("Solid", "y_s^*", side=LEFT)
-x.add_output("Prop", "y_p^*", side=LEFT)
-x.add_output("Optimizer", "x^*", side=LEFT)
 
-x.connect("Func", "Optimizer", r"f,g, \nabla f, \nabla g")
+#x.add_output("Solid", "y_s^*", side=LEFT)
+#x.add_output("Prop", "y_p^*", side=LEFT)
+#x.add_output("Optimizer", "x^*", side=LEFT)
+
+#x.connect("Func", "Optimizer", r"f,g, \nabla f, \nabla g")
 #-------------------------INDIVIDUAL DISCIPLINES OUTPUT:END--------------------------#
 
 
 #-------------------------INDIVIDUAL DISCIPLINES INPUT:BEGIN--------------------------#
-x.add_input("Optimizer", "x^o")
+#x.add_input("Optimizer", "x^o")
 #-------------------------INDIVIDUAL DISCIPLINES INPUT:END--------------------------#
 
-x.add_process(['Optimizer', 'MDA', 'Fluid', 'Solid', 'Prop', 'MDA'], arrow=False)
+#x.add_process(['Optimizer', 'MDA', 'Fluid', 'Solid', 'Prop', 'MDA'], arrow=False)
 
-x.add_process(['Optimizer', 'MDA', 'Func', 'Optimizer'], arrow=False)
+#x.add_process(['Optimizer', 'MDA', 'Func', 'Optimizer'], arrow=False)
 
 x.write("TASOPT_XDSM")
