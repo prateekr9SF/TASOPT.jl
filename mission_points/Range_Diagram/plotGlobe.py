@@ -30,9 +30,9 @@ RINGS_NMI = {
 #}
 
 COLORS = {
-    "2000 nmi": "dimgray",
-    "3000 nmi": "dimgray",
-    "6000 nmi": "dimgray",
+    "2000 nmi": "black",
+    "3000 nmi": "black",
+    "6000 nmi": "black",
 }
 WIDTHS = {k: 2.5 for k in RINGS_NMI}
 
@@ -56,13 +56,13 @@ proj = ccrs.AzimuthalEquidistant(central_longitude=LON0, central_latitude=LAT0)
 fig = plt.figure(figsize=(8, 8))
 ax = plt.axes(projection=proj)
 ax.set_global()
-ax.coastlines()
+ax.coastlines(resolution="50m", linewidth=1.0, color="gray")
 
-ax.add_feature(cfeature.BORDERS.with_scale('50m'), linewidth=0.01)
-ax.add_feature(cfeature.STATES.with_scale('50m'), linewidth=0.01)
+ax.add_feature(cfeature.BORDERS.with_scale('50m'), linewidth=0.01, edgecolor = "lightgray")
+ax.add_feature(cfeature.STATES.with_scale('50m'), linewidth=0.01, edgecolor="lightgray")
 ax.add_feature(cfeature.OCEAN.with_scale('50m'), facecolor="C0", alpha = 0.3, edgecolor="none")
 ax.add_feature(cfeature.LAND.with_scale("50m"),  facecolor="#e9eef2", edgecolor="none")
-ax.add_feature(cfeature.COASTLINE.with_scale("50m"), linewidth=0.01, edgecolor="none")
+#ax.add_feature(cfeature.COASTLINE.with_scale("50m"), linewidth=0.01, edgecolor="none", color = "lightgray")
 
 # Basemap
 #ax.add_feature(cfeature.OCEAN.with_scale("110m"), facecolor="#91a2b1", edgecolor="none")
