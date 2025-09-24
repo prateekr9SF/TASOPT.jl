@@ -193,7 +193,7 @@ def main():
         )
 
         plot_box = False
-        plot_points = True
+        plot_points = False
         plot_2d_histogram(df, mach_min, mach_max, cl_min, cl_max,
                           mach_pts, cl_pts, surrounding_bins_list,
                           weights, plot_points, plot_box, n_points)

@@ -183,7 +183,7 @@ def main():
 
     # Domain bounds
     mach_min, mach_max = 0.70, 0.82
-    cl_min, cl_max = 0.48, 0.54
+    cl_min, cl_max = 0.52, 0.57
     filter_radius = 4
 
     for n_points in [1, 4, 9]:
@@ -193,7 +193,7 @@ def main():
         )
 
         plot_box = False
-        plot_points = True
+        plot_points = False
         plot_2d_histogram(df, mach_min, mach_max, cl_min, cl_max,
                           mach_pts, cl_pts, surrounding_bins_list,
                           weights, plot_points, plot_box, n_points)
