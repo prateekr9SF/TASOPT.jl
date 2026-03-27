@@ -19,5 +19,6 @@ include(TASOPT.__TASOPTindices__)
     include("unit_test_missions.jl")
     include("unit_test_outputs.jl")
     include("unit_test_io.jl")
+    include("unit_test_atmos.jl")
 
 end
